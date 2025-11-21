@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { useStore } from '../context/StoreContext';
 import { 
@@ -13,6 +14,7 @@ import {
   Cell
 } from 'recharts';
 import { GoalStatus } from '../types';
+import { TrendingUp, TrendingDown, Minus, Zap } from 'lucide-react';
 
 const COLORS = ['#22c55e', '#eab308', '#ef4444', '#3b82f6'];
 
@@ -61,27 +63,68 @@ export const Dashboard: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Goal Completion</p>
-          <p className="text-3xl font-bold text-slate-900 mt-2">{completionRate}%</p>
-          <div className="w-full bg-gray-100 rounded-full h-2 mt-4">
-            <div className="bg-brand-500 h-2 rounded-full" style={{ width: `${completionRate}%` }}></div>
+        {/* Goal Completion */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+          <div className="flex justify-between items-start">
+             <div>
+                <p className="text-sm font-medium text-gray-500">Goal Completion</p>
+                <p className="text-3xl font-bold text-slate-900 mt-2">{completionRate}%</p>
+             </div>
+             <div className={`p-2 rounded-lg ${completionRate >= 80 ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>
+                 <TrendingUp size={20} />
+             </div>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-1.5 mt-4">
+            <div className="bg-brand-500 h-1.5 rounded-full" style={{ width: `${completionRate}%` }}></div>
           </div>
         </div>
+
+        {/* CAC */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Active Memos</p>
-          <p className="text-3xl font-bold text-slate-900 mt-2">{memos.length}</p>
-          <p className="text-xs text-green-600 mt-1">+2 this week</p>
+          <div className="flex justify-between items-start">
+             <div>
+                <p className="text-sm font-medium text-gray-500">CAC</p>
+                <p className="text-3xl font-bold text-slate-900 mt-2">$142</p>
+             </div>
+             <div className="p-2 rounded-lg bg-green-50 text-green-600">
+                 <TrendingDown size={20} />
+             </div>
+          </div>
+          <p className="text-xs text-green-600 mt-3 flex items-center gap-1">
+             <TrendingDown size={12} /> 12% vs last quarter
+          </p>
         </div>
+
+        {/* Solar Installation Rate */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Solar Installs (Act)</p>
-          <p className="text-3xl font-bold text-slate-900 mt-2">1,240</p>
-          <p className="text-xs text-red-500 mt-1">92% of Target</p>
+          <div className="flex justify-between items-start">
+             <div>
+                <p className="text-sm font-medium text-gray-500">Install Rate</p>
+                <p className="text-3xl font-bold text-slate-900 mt-2">18<span className="text-sm text-gray-400 font-normal">/wk</span></p>
+             </div>
+             <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                 <Zap size={20} />
+             </div>
+          </div>
+           <p className="text-xs text-green-600 mt-3 flex items-center gap-1">
+             <TrendingUp size={12} /> 5% vs target
+          </p>
         </div>
+
+        {/* Average Deal Size */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Avg Team Score</p>
-          <p className="text-3xl font-bold text-slate-900 mt-2">B+</p>
-          <p className="text-xs text-gray-400 mt-1">Last Review Cycle</p>
+          <div className="flex justify-between items-start">
+             <div>
+                <p className="text-sm font-medium text-gray-500">Avg Deal Size</p>
+                <p className="text-3xl font-bold text-slate-900 mt-2">$8.5k</p>
+             </div>
+             <div className="p-2 rounded-lg bg-gray-50 text-gray-600">
+                 <Minus size={20} />
+             </div>
+          </div>
+           <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
+             Flat vs last month
+          </p>
         </div>
       </div>
 
