@@ -46,7 +46,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
   );
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden relative">
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
@@ -176,9 +176,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
-          <GeminiChat />
         </main>
       </div>
+      
+      {/* Chat Component - Placed outside main content for better Z-Index handling */}
+      <GeminiChat />
     </div>
   );
 };

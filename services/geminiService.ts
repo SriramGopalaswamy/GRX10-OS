@@ -90,7 +90,11 @@ export const queryKnowledgeBase = async (query: string, goals: Goal[], memos: Me
 
   const context = `
     You are an intelligent assistant for GRX10, a company focusing on renewable energy and marketing.
-    You have access to the company's internal goals and memos database.
+    You have access to the company's internal goals, memos, and related tasks.
+    
+    Interpret "tasks" or "action items" by looking for:
+    1. The "Ask" or "Solution" section in Memos (Memos are requests for action).
+    2. Explicit questions or requests in Goal Comments.
     
     CURRENT GOALS DATABASE:
     ${JSON.stringify(enrichedGoals, null, 2)}
