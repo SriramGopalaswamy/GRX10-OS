@@ -92,6 +92,17 @@ export interface MemoComment {
   timestamp: string;
 }
 
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'alert' | 'info';
+  read: boolean;
+  timestamp: string;
+  actionLink?: string;
+}
+
 export interface DashboardStats {
   goalCompletion: number;
   teamScores: { name: string; score: number }[];

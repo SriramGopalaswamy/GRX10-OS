@@ -1,6 +1,6 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { Goal, Memo } from "../types";
+import { Goal, Memo, User } from "../types";
 
 const getAIClient = () => {
   const apiKey = process.env.API_KEY;
@@ -63,25 +63,47 @@ export const optimizeGoal = async (goalDescription: string): Promise<string> => 
   }
 };
 
-export const queryKnowledgeBase = async (query: string, goals: Goal[], memos: Memo[]): Promise<string> => {
+export const queryKnowledgeBase = async (query: string, goals: Goal[], memos: Memo[], users: User[]): Promise<string> => {
   const ai = getAIClient();
   if (!ai) return "AI Service Unavailable";
+
+  // Helper to resolve names
+  const getUserName = (id: string) => users.find(u => u.id === id)?.name || id;
+
+  // Enrich Data with Names
+  const enrichedGoals = goals.map(g => ({
+    title: g.title,
+    owner: getUserName(g.ownerId),
+    status: g.status,
+    progress: `${g.current}/${g.target} ${g.metric}`,
+    comments: g.comments?.map(c => `${getUserName(c.authorId)}: ${c.text}`).join(' | ')
+  }));
+
+  const enrichedMemos = memos.map(m => ({
+    subject: m.subject,
+    from: getUserName(m.fromId),
+    to: m.toId === 'ALL' ? 'Leadership Team' : getUserName(m.toId),
+    date: m.date,
+    summary: m.summary,
+    status: m.status
+  }));
 
   const context = `
     You are an intelligent assistant for GRX10, a company focusing on renewable energy and marketing.
     You have access to the company's internal goals and memos database.
     
     CURRENT GOALS DATABASE:
-    ${JSON.stringify(goals.map(g => ({ title: g.title, owner: g.ownerId, status: g.status, progress: `${g.current}/${g.target} ${g.metric}` })))}
+    ${JSON.stringify(enrichedGoals, null, 2)}
 
     CURRENT MEMOS DATABASE:
-    ${JSON.stringify(memos.map(m => ({ subject: m.subject, author: m.fromId, date: m.date, summary: m.summary })))}
+    ${JSON.stringify(enrichedMemos, null, 2)}
 
     USER QUESTION: "${query}"
 
     Answer the user's question based STRICTLY on the provided data. 
     If the answer isn't in the data, say so. 
     Be concise and helpful.
+    When referring to people, use their names.
   `;
 
   try {

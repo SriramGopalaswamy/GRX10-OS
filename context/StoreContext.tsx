@@ -1,6 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Goal, Memo, Role, Team, GoalType, GoalStatus, MemoStatus } from '../types';
+import { User, Goal, Memo, Role, Team, GoalType, GoalStatus, MemoStatus, Notification } from '../types';
+
+// Helper for dates
+const getDaysAgo = (days: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toISOString().split('T')[0];
+};
 
 // Mock Data
 const MOCK_USERS: User[] = [
@@ -56,6 +63,17 @@ const MOCK_MEMOS: Memo[] = [
       { id: 'a2', name: 'Migration_Timeline.xlsx', size: '1.1 MB', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
     ],
     comments: []
+  },
+  {
+    id: 'm2',
+    fromId: 'u4',
+    toId: 'u3', // Sent to Arjun
+    date: getDaysAgo(3), // 3 days old, should trigger notification
+    subject: 'Urgent: Solar Panel Supplier Switch',
+    status: MemoStatus.PENDING_REVIEW,
+    summary: 'Problem: Current supplier delayed Q3 shipment by 14 days.\n\nSolution: Switch to backup vendor "SolTech" for this batch. Cost is +5% but guarantees delivery.\n\nRisks: Margin impact is -0.5%.\n\nAsk: Approve immediate PO generation for SolTech.',
+    attachments: [],
+    comments: []
   }
 ];
 
@@ -64,11 +82,14 @@ interface StoreContextType {
   users: User[];
   goals: Goal[];
   memos: Memo[];
+  notifications: Notification[];
   addGoal: (goal: Goal) => void;
   updateGoal: (goal: Goal) => void;
   addMemo: (memo: Memo) => void;
   updateMemo: (memo: Memo) => void;
   setCurrentUser: (user: User) => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -78,6 +99,56 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   const [users] = useState<User[]>(MOCK_USERS);
   const [goals, setGoals] = useState<Goal[]>(MOCK_GOALS);
   const [memos, setMemos] = useState<Memo[]>(MOCK_MEMOS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  // Check for overdue memos on mount
+  useEffect(() => {
+    const checkOverdue = () => {
+        const now = new Date();
+        const newNotifs: Notification[] = [];
+
+        memos.forEach(memo => {
+            if (memo.status === MemoStatus.PENDING_REVIEW) {
+                const memoDate = new Date(memo.date);
+                const diffTime = Math.abs(now.getTime() - memoDate.getTime());
+                const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+
+                if (diffHours > 48) {
+                    // Determine recipients
+                    const recipients = memo.toId === 'ALL' 
+                        ? users.filter(u => u.id !== memo.fromId)
+                        : users.filter(u => u.id === memo.toId);
+
+                    recipients.forEach(recipient => {
+                         // Avoid duplicate notifications for this session
+                         if (!notifications.some(n => n.userId === recipient.id && n.message.includes(memo.id))) {
+                             newNotifs.push({
+                                 id: Math.random().toString(36).substr(2, 9),
+                                 userId: recipient.id,
+                                 title: 'Action Required: Overdue Memo',
+                                 message: `Memo "${memo.subject}" has been pending review for ${diffHours} hours. Please review immediately.`,
+                                 type: 'alert',
+                                 read: false,
+                                 timestamp: 'Just now',
+                                 actionLink: 'memos'
+                             });
+                             
+                             // Simulate Email System
+                             console.log(`[EMAIL SERVICE] To: ${recipient.email} | Subject: URGENT - Memo Pending Review | Body: The memo "${memo.subject}" is overdue.`);
+                         }
+                    });
+                }
+            }
+        });
+
+        if (newNotifs.length > 0) {
+            setNotifications(prev => [...prev, ...newNotifs]);
+        }
+    };
+
+    checkOverdue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount to simulate system check
 
   const addGoal = (goal: Goal) => setGoals(prev => [...prev, goal]);
   
@@ -91,8 +162,16 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     setMemos(prev => prev.map(m => m.id === updatedMemo.id ? updatedMemo : m));
   };
 
+  const markNotificationRead = (id: string) => {
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const markAllNotificationsRead = () => {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
   return (
-    <StoreContext.Provider value={{ currentUser, users, goals, memos, addGoal, updateGoal, addMemo, updateMemo, setCurrentUser }}>
+    <StoreContext.Provider value={{ currentUser, users, goals, memos, notifications, addGoal, updateGoal, addMemo, updateMemo, setCurrentUser, markNotificationRead, markAllNotificationsRead }}>
       {children}
     </StoreContext.Provider>
   );

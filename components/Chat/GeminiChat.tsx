@@ -5,7 +5,7 @@ import { useStore } from '../../context/StoreContext';
 import { queryKnowledgeBase } from '../../services/geminiService';
 
 export const GeminiChat: React.FC = () => {
-  const { goals, memos } = useStore();
+  const { goals, memos, users } = useStore();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{role: 'user' | 'assistant', text: string}[]>([
     { role: 'assistant', text: 'Hi! I can search memos, check goal status, or answer questions about the team. How can I help?' }
@@ -30,7 +30,7 @@ export const GeminiChat: React.FC = () => {
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
 
-    const answer = await queryKnowledgeBase(userMessage, goals, memos);
+    const answer = await queryKnowledgeBase(userMessage, goals, memos, users);
     
     setMessages(prev => [...prev, { role: 'assistant', text: answer }]);
     setIsLoading(false);
